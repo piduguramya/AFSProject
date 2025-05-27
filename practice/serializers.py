@@ -13,7 +13,7 @@ from .models import (Categories1,
 class Products1Serializer(serializers.ModelSerializer):
     class Meta:
         model=Products1
-        fields=["category","product_name","decription"]
+        fields=["id","category","product_name","decription"]
 
 
 class Categories1Serializer(serializers.ModelSerializer):

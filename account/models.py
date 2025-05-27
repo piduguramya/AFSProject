@@ -20,27 +20,12 @@ class UserAccount(models.Model):
 
 
 class Account(models.Model):
+    phone_number=PhoneNumberField(primary_key=True,unique=True)
     name=models.CharField(max_length=255)
-    phone_number=models.PhoneNumberField()
     address=models.TextField(null=True, blank=True)
 
     def __str__(self):
         return self.name
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

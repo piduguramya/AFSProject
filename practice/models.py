@@ -77,7 +77,7 @@ class ShoppingCartItems(models.Model):
         return self.product_item.sku
 
 class Order(models.Model):   #order_id=auto
-    user=models.ForeignKey(UserAccount,on_delete=models.CASCADE)
+    user=models.ForeignKey(Account,on_delete=models.CASCADE)
     total_sp=models.DecimalField(max_digits=10, decimal_places=2)   # price sold  
     total_mrp=models.DecimalField(max_digits=10, decimal_places=2)    ##Price displayed
     payment=models.BooleanField()

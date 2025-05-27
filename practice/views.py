@@ -21,8 +21,7 @@ from .serializers import (Categories1Serializer,
                             ShoppingCartSerializer,
                             ShoppingCartItemsSerializer,
                             OrderSerializer,
-                            Order_itemsSerializer
-                            )
+                            Order_itemsSerializer)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -40,7 +39,7 @@ class CategoryprodsView(APIView):
 
 class prodidView(APIView):
     def get(self,request,pk=None):
-        queryset=Products1.objects.all()
+        queryset=Products1.objects.get(id=pk)
         proddata=Products1Serializer(queryset).data
 
         return Response(proddata)
@@ -132,7 +131,7 @@ class AddProductView(APIView):
 
 class AddProductItemView(APIView):
     def post(self,request):
-        addproductitem=Product_item1Serializer(data=request.data)
+        addproductitem=Product_item1serializer(data=request.data)
 
         if addproductitem.is_valid():
             try:
@@ -147,30 +146,43 @@ class AddProductItemView(APIView):
 ###-------------cart logic------------------##
 class AddToCartView(APIView):
     def post(self, request):
-        user_id = request.data.get("user_id")
+        phone_number = request.data.get("phone_number")
         product_id = request.data.get("product_item")
         qty = int(request.data.get("qty", 1))
+
+        # Get or create the user
+        user, created = Account.objects.get_or_create(
+            phone_number=phone_number,
+            defaults={"name": "New User"}
+        )
 
         try:
             product = Product_item1.objects.get(id=product_id)
         except Product_item1.DoesNotExist:
-            return Response({"error": "Product not found"}, status=404)
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        cart, _ = ShoppingCart.objects.get_or_create(user_id=user_id)
+        if product.qty_in_stock < qty:
+            return Response({"error": "Not enough stock available"}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart, _ = ShoppingCart.objects.get_or_create(user=user)
 
         item, created = ShoppingCartItems.objects.get_or_create(
             cart_id=cart,
             product_item=product,
-            defaults={'qty': qty}
+            defaults={'qty': qty,
+                      "sp":product.selling_price,
+                      "mrp":product.mrp}
         )
 
         if not created:
+            if product.qty_in_stock < item.qty + qty:
+                return Response({"error": "Not enough stock available for the requested quantity"}, status=status.HTTP_400_BAD_REQUEST)
+
             item.qty += qty
+            item.save()
 
-        item.save()
-
-        serializer = ShoppingCartItemSerializer(item)
-        return Response(serializer.data, status=201)
+        serializer = ShoppingCartItemsSerializer(item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UpdateCartItemView(APIView):
     def patch(self, request, item_id):
@@ -179,13 +191,41 @@ class UpdateCartItemView(APIView):
         except ShoppingCartItems.DoesNotExist:
             return Response({"error": "Item not found"}, status=404)
 
-        qty = request.data.get("qty")
-        if qty:
-            item.qty = int(qty)
-            item.save()
+        qty_delta = request.data.get("qty")
+        if qty_delta is None:
+            return Response({"error": "Quantity change required"}, status=400)
 
-        serializer = ShoppingCartItemSerializer(item)
+        try:
+            qty_delta = int(qty_delta)
+        except ValueError:
+            return Response({"error": "Invalid quantity"}, status=400)
+
+        # Calculate new quantity
+        new_qty = item.qty + qty_delta
+
+        if new_qty < 1:
+            return Response({"error": "Quantity cannot be less than 1"}, status=400)
+
+        if item.product_item.qty_in_stock < new_qty:
+            return Response(
+                {"error": f"Not enough stock for {item.product_item.sku}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        item.qty = new_qty
+
+        # Use unit prices from product to update totals
+        unit_sp = item.product_item.selling_price
+        unit_mrp = item.product_item.mrp
+
+        item.sp = unit_sp * new_qty
+        item.mrp = unit_mrp * new_qty
+
+        item.save()
+
+        serializer = ShoppingCartItemsSerializer(item)
         return Response(serializer.data)
+
 
 class DeleteCartItemView(APIView):
     def delete(self, request, item_id):
@@ -198,18 +238,73 @@ class DeleteCartItemView(APIView):
         return Response({"message": "Item deleted"}, status=204)
             
 
+# -------orders--------------------#
+class PlaceOrderView(APIView):
+    def post(self, request):
+        user_id = request.data.get("phone_number")
+
+        try:
+            cart = ShoppingCart.objects.get(user_id=user_id)
+            cart_items = ShoppingCartItems.objects.filter(cart_id=cart)
+        except ShoppingCart.DoesNotExist:
+            return Response({"error": "Cart not found"}, status=404)
+
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty"}, status=400)
+
+        total_sp = 0
+        total_mrp = 0
+
+        # Stock check
+        for item in cart_items:
+            if item.product_item.stock < item.qty:
+                return Response(
+                    {"error": f"Not enough stock for {item.product_item.sku}"},
+                    status=400
+                )
+
+        with transaction.atomic():
+            # Create order
+            order = Order.objects.create(
+                user_id=user_id,
+                total_sp=0,  # Temporary
+                total_mrp=0,
+                payment=True
+            )
+
+            for item in cart_items:
+                # Create order item
+                Order_items.objects.create(
+                    order=order,
+                    items=item.product_item,
+                    qty=item.qty,
+                    sp=item.sp,
+                    mrp=item.mrp
+                )
+
+                # Update totals
+                total_sp += item.sp
+                total_mrp += item.mrp
+
+                # Reduce stock
+                item.product_item.stock -= item.qty
+                item.product_item.save()
+
+            # Update order totals
+            order.total_sp = total_sp
+            order.total_mrp = total_mrp
+            order.save()
+
+            # Clear cart
+            cart_items.delete()
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=201)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+class UserOrdersView(APIView):
+    def get(self, request, user_id):
+        orders = Order.objects.filter(user_id=user_id)
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
