@@ -1,6 +1,6 @@
 from django.shortcuts import render
-from .models import UserAccount
-from .serializers import UserAccountSerializer
+from .models import UserAccount,Account
+from .serializers import UserAccountSerializer,AccountSerializer
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -25,7 +25,7 @@ class UserRegisterView(APIView):
                     status=status.HTTP_201_CREATED)
             except Exception as e:
                 return Response({
-                    "error":e    #useralready exist      
+                    "error":e                 #useralready exist      
                 },status=status.HTTP_409_conflict)
         else:
             return Response(create_user.errors,status=status.HTTP_400_BAD_REQUEST)
@@ -192,6 +192,19 @@ class ResetPasswordView(APIView):
 
 
 
+class RegAccountUserView(APIView):
+    def post(self,request):
+        userdata=AccountSerializer(data=request.data)
+        print(userdata)
+
+        if userdata.is_valid():
+            try:
+                userdata.save()
+                return Response("account user saved successfully",status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response(str(e),status=status.HTTP_409_CONFLICT)
+        else:
+            return Response(userdata.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
 

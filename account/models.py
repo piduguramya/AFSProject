@@ -20,7 +20,7 @@ class UserAccount(models.Model):
 
 
 class Account(models.Model):
-    phone_number=PhoneNumberField(primary_key=True,unique=True)
+    phone_number=models.CharField(unique=True)
     name=models.CharField(max_length=255)
     address=models.TextField(null=True, blank=True)
 

@@ -17,13 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from account import urls as account_urls
-from catalog import urls as catalog_urls
+# from catalog import urls as catalog_urls
 from practice import urls as practice_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/',include(account_urls)),
-    path('apx/',include(catalog_urls)),
+    path('account/',include(account_urls)),
+    # path('apx/',include(catalog_urls)),
     path("practice/",include(practice_urls))
 ]
 

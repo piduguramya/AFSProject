@@ -83,7 +83,7 @@ class Order(models.Model):   #order_id=auto
     payment=models.BooleanField()
     
     def __str__(self):
-        return f"{self.user.user_name}s oder "
+        return f"{self.user.name}s oder "
 
 class Order_items(models.Model): # order_items_id is automatic
     order=models.ForeignKey(Order, on_delete=models.CASCADE)
@@ -93,7 +93,7 @@ class Order_items(models.Model): # order_items_id is automatic
     mrp = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"{self.order.order_id} id the order id " 
+        return f"order items are of user {self.order.user.name} " 
 
 
 

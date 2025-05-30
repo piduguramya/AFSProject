@@ -25,6 +25,8 @@ from .serializers import (Categories1Serializer,
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from django.db import transaction
+
 
 
 
@@ -56,8 +58,9 @@ class variantsView(APIView):
             category["variants"]=variantsdata
 
             for variant in variantsdata:
-                query=Variation_option1.objects.all()
-                variant["options"]=Variation_option1serializer(query,many=True,read_only=True).data
+                variant_id = variant["id"]
+                options = Variation_option1.objects.filter(variation__id=variant_id)
+                variant["options"] = Variation_option1serializer(options, many=True).data
 
         return Response(categories)
 
@@ -146,45 +149,68 @@ class AddProductItemView(APIView):
 ###-------------cart logic------------------##
 class AddToCartView(APIView):
     def post(self, request):
-        phone_number = request.data.get("phone_number")
+        phone = request.data.get("phone_number")
         product_id = request.data.get("product_item")
         qty = int(request.data.get("qty", 1))
 
-        # Get or create the user
-        user, created = Account.objects.get_or_create(
-            phone_number=phone_number,
-            defaults={"name": "New User"}
-        )
+        if not phone or not product_id:
+            return Response({"error": "Phone number and product ID are required."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Try to get the user
+        user_qs = Account.objects.filter(phone_number=phone)
+        if user_qs.exists():
+            user = user_qs.first()
+            print("user with that mbl number is present")
+        else:
+            user = Account.objects.create(phone_number=phone, name="xyz")
+            user.save()
+            user.refresh_from_db()
+            print("user createdddddddddddddddd", user.id)
+
+
+        # Try to get product
         try:
             product = Product_item1.objects.get(id=product_id)
+            print("product found")
         except Product_item1.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if product.qty_in_stock < qty:
             return Response({"error": "Not enough stock available"}, status=status.HTTP_400_BAD_REQUEST)
 
-        cart, _ = ShoppingCart.objects.get_or_create(user=user)
+        print("started")
+        # Get or create cart for the user
+        try:
+            cart, _ = ShoppingCart.objects.get_or_create(user=user)
+        except Exception as e:
+            print("Cart creation failed:", e)
+            return Response({"error": str(e)}, status=500)
 
+        print("created cart on the user or cart present")
+        print("stopped")
+        # Get or create cart item
         item, created = ShoppingCartItems.objects.get_or_create(
-            cart_id=cart,
+            cart_id=cart,    ####may be error
             product_item=product,
-            defaults={'qty': qty,
-                      "sp":product.selling_price,
-                      "mrp":product.mrp}
+            defaults={
+                'qty': qty,
+                'sp': product.selling_price,
+                'mrp': product.mrp,
+            }
         )
 
         if not created:
-            if product.qty_in_stock < item.qty + qty:
+            new_total_qty = item.qty + qty
+            if product.qty_in_stock < new_total_qty:
                 return Response({"error": "Not enough stock available for the requested quantity"}, status=status.HTTP_400_BAD_REQUEST)
 
-            item.qty += qty
+            item.qty = new_total_qty
             item.save()
 
         serializer = ShoppingCartItemsSerializer(item)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class UpdateCartItemView(APIView):
+class UpdateCartItemView(APIView):    #{qty: }
     def patch(self, request, item_id):
         try:
             item = ShoppingCartItems.objects.get(id=item_id)
@@ -241,23 +267,26 @@ class DeleteCartItemView(APIView):
 # -------orders--------------------#
 class PlaceOrderView(APIView):
     def post(self, request):
-        user_id = request.data.get("phone_number")
+        cart_id = request.data.get("cart_id")
+
+        if not cart_id:
+            return Response({"error": "Cart ID is required."}, status=400)
 
         try:
-            cart = ShoppingCart.objects.get(user_id=user_id)
+            cart = ShoppingCart.objects.get(cart_id=cart_id)
             cart_items = ShoppingCartItems.objects.filter(cart_id=cart)
         except ShoppingCart.DoesNotExist:
-            return Response({"error": "Cart not found"}, status=404)
+            return Response({"error": "Cart not found."}, status=404)
 
         if not cart_items.exists():
-            return Response({"error": "Cart is empty"}, status=400)
+            return Response({"error": "Cart is empty."}, status=400)
 
         total_sp = 0
         total_mrp = 0
 
         # Stock check
         for item in cart_items:
-            if item.product_item.stock < item.qty:
+            if item.product_item.qty_in_stock < item.qty:
                 return Response(
                     {"error": f"Not enough stock for {item.product_item.sku}"},
                     status=400
@@ -266,10 +295,10 @@ class PlaceOrderView(APIView):
         with transaction.atomic():
             # Create order
             order = Order.objects.create(
-                user_id=user_id,
+                user=cart.user,
                 total_sp=0,  # Temporary
                 total_mrp=0,
-                payment=True
+                payment=True  # You can replace this with real payment logic later
             )
 
             for item in cart_items:
@@ -287,7 +316,7 @@ class PlaceOrderView(APIView):
                 total_mrp += item.mrp
 
                 # Reduce stock
-                item.product_item.stock -= item.qty
+                item.product_item.qty_in_stock -= item.qty
                 item.product_item.save()
 
             # Update order totals
@@ -295,16 +324,22 @@ class PlaceOrderView(APIView):
             order.total_mrp = total_mrp
             order.save()
 
-            # Clear cart
+            # Clear the cart
             cart_items.delete()
 
         serializer = OrderSerializer(order)
         return Response(serializer.data, status=201)
 
-
-
 class UserOrdersView(APIView):
-    def get(self, request, user_id):
-        orders = Order.objects.filter(user_id=user_id)
-        serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)
+    def get(self, request,id):
+        orders = Order.objects.filter(user_id__id=id)
+        serializer = OrderSerializer(orders, many=True).data
+        return Response(serializer)
+
+class OrderItemsView(APIView):
+    def get(self,request, order_id):
+        order_items=Order_items.objects.filter(order__id=order_id)
+        serializer=Order_itemsSerializer(order_items,many=True).data
+        return Response(serializer)
+
+

@@ -25,7 +25,10 @@ urlpatterns = [
 
     # Order endpoints
     path("place-order/", views.PlaceOrderView.as_view()),
-    path("orders/<int:user_id>/", views.UserOrdersView.as_view()),
+    path("userorders/<int:id>/", views.UserOrdersView.as_view()),
+
+    # Order_items endpoints
+    path("order_items/<int:order_id>/",views.OrderItemsView.as_view()),
 
     # JWT Auth
     path("api/token/", TokenObtainPairView.as_view(), name='token_obtain_pair'),
