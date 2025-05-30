@@ -22,7 +22,8 @@ from .serializers import (Categories1Serializer,
                             ShoppingCartSerializer,
                             ShoppingCartItemsSerializer,
                             OrderSerializer,
-                            Order_itemsSerializer)
+                            Order_itemsSerializer,
+                            AccountDepositSerializer)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
