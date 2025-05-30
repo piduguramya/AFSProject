@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'account',
-    # 'catalog',
-    'practice',
+    'catalog',
+    # 'practice',
     "phonenumber_field",
     'rest_framework_simplejwt',
 

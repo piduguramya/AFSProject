@@ -30,6 +30,9 @@ urlpatterns = [
     # Order_items endpoints
     path("order_items/<int:order_id>/",views.OrderItemsView.as_view()),
 
+    # AccountDeposit endpoints
+    path("deposits/",views.AddAccountDeposits.as_view()),
+
     # JWT Auth
     path("api/token/", TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path("api/token/refresh/", TokenRefreshView.as_view(), name='token_refresh'),

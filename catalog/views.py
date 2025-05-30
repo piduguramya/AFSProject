@@ -1,14 +1,15 @@
 from django.shortcuts import render
-from .models import (Categories1,
-                        Products1,
-                        Product_item1,
-                        Variation1,
-                        Variation_option1,
-                        Product_Configuration1,
+from .models import (Categories,
+                        Products,
+                        Product_item,
+                        Variation,
+                        Variation_option,
+                        Product_Configuration,
                         ShoppingCart,
                         ShoppingCartItems,
                         Order,
-                        Order_items)
+                        Order_items,
+                        AccountDeposit)
 from account.models import UserAccount,Account                      
 from .serializers import (Categories1Serializer,
                             Products1Serializer,
@@ -341,5 +342,20 @@ class OrderItemsView(APIView):
         order_items=Order_items.objects.filter(order__id=order_id)
         serializer=Order_itemsSerializer(order_items,many=True).data
         return Response(serializer)
+
+
+
+class AddAccountDeposits(APIView):
+    def post(self,request):
+        depositsdata=AccountDepositSerializer(data=request.data)
+
+        if depositsdata.is_valid():
+            try:
+                depositsdata.save()
+                return Response("data added successfully",status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response(str(e),status=status.HTTP_409_CONFLICT)
+        else:
+            return Response("invalid json",status=status.HTTP_400_BAD_REQUEST)
 
 

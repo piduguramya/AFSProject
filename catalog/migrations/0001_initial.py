@@ -49,8 +49,8 @@ class Migration(migrations.Migration):
                 ('qty', models.PositiveIntegerField()),
                 ('sp', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('mrp', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='practice.order')),
-                ('items', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='practice.product_item1')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='catalog.order')),
+                ('items', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='catalog.product_item1')),
             ],
         ),
         migrations.CreateModel(
@@ -59,13 +59,13 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('product_name', models.CharField(max_length=255)),
                 ('decription', models.TextField()),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='prods', to='practice.categories1')),
+                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='prods', to='catalog.categories1')),
             ],
         ),
         migrations.AddField(
             model_name='product_item1',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='prod_items', to='practice.products1'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='prod_items', to='catalog.products1'),
         ),
         migrations.CreateModel(
             name='ShoppingCart',
@@ -81,8 +81,8 @@ class Migration(migrations.Migration):
                 ('qty', models.PositiveIntegerField(default=1)),
                 ('sp', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('mrp', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('cart_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cart_user', to='practice.shoppingcart')),
-                ('product_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cart_items', to='practice.product_item1')),
+                ('cart_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cart_user', to='catalog.shoppingcart')),
+                ('product_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cart_items', to='catalog.product_item1')),
             ],
         ),
         migrations.CreateModel(
@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('variation_name', models.CharField(max_length=100)),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='categories', to='practice.categories1')),
+                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='categories', to='catalog.categories1')),
             ],
         ),
         migrations.CreateModel(
@@ -98,15 +98,15 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('value', models.CharField(max_length=100)),
-                ('variation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='variations', to='practice.variation1')),
+                ('variation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='variations', to='catalog.variation1')),
             ],
         ),
         migrations.CreateModel(
             name='Product_Configuration1',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('product_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='product_items', to='practice.product_item1')),
-                ('variationoption', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='variation_options', to='practice.variation_option1')),
+                ('product_item', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='product_items', to='catalog.product_item1')),
+                ('variationoption', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='variation_options', to='catalog.variation_option1')),
             ],
         ),
     ]

@@ -1,41 +1,42 @@
 from rest_framework import serializers
-from .models import (Categories1,
-                        Products1,
-                        Product_item1,
-                        Variation1,
-                        Variation_option1,
-                        Product_Configuration1,
+from .models import (Categories,
+                        Products,
+                        Product_item,
+                        Variation,
+                        Variation_option,
+                        Product_Configuration,
                         ShoppingCart,
                         ShoppingCartItems,
                         Order,
-                        Order_items)
+                        Order_items,
+                        AccountDeposit)
 
 class Products1Serializer(serializers.ModelSerializer):
     class Meta:
-        model=Products1
+        model=Products
         fields=["id","category","product_name","decription"]
 
 
 class Categories1Serializer(serializers.ModelSerializer):
 
     class Meta:
-        model=Categories1
+        model=Categories
         fields=["id","category_name"]
 
 
 class Product_item1serializer(serializers.ModelSerializer):
     class Meta:
-        model=Product_item1
+        model=Product_item
         fields='__all__'
 
 class Variation1serializer(serializers.ModelSerializer):
     class Meta:
-        model=Variation1
+        model=Variation
         fields='__all__'
 
 class Variation_option1serializer(serializers.ModelSerializer):
     class Meta:
-        model=Variation_option1
+        model=Variation_option
         fields='__all__'
 
 class Product_Configuration1Serializer(serializers.ModelSerializer):
@@ -43,7 +44,7 @@ class Product_Configuration1Serializer(serializers.ModelSerializer):
     variationoption=Variation_option1serializer()
 
     class Meta:
-        model=Product_Configuration1
+        model=Product_Configuration
         fields=["product_item","variationoption"]
 
 
@@ -67,6 +68,12 @@ class Order_itemsSerializer(serializers.ModelSerializer):
         model=Order_items
         fields="__all__"
 
+class AccountDepositSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=AccountDeposit
+        fields='__all__'
+
+
 
 
 # <------------------## extra serializers ##----------------------------->
@@ -77,16 +84,15 @@ class categorywiseproducts(serializers.ModelSerializer):             ####extraaa
     prods=Products1Serializer(many=True,read_only=True)
 
     class Meta:
-        model=Categories1
+        model=Categories
         fields=["id","category_name","prods"]
 
 class Products1foritemsSerializer(serializers.ModelSerializer):
     prod_items=Product_item1serializer(many=True,read_only=True)
 
     class Meta:
-        model=Products1
+        model=Products
         fields=["category","product_name","decription","prod_items"]
-
 
 
 
