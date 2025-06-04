@@ -11,6 +11,7 @@ urlpatterns = [
     path("prodwithid/<int:pk>", views.prodidView.as_view()),
     path("variants/", views.variantsView.as_view()),
     path("full/", views.porductswithvariants.as_view()),
+    path("fullwithsp/", views.porductswithvariantstouser.as_view()),
     path("priceorder/", views.ProductsPriceOrder.as_view()),
 
     # Add category, product, and product item

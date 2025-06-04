@@ -11,31 +11,32 @@ from .models import (Categories,
                         Order_items,
                         AccountDeposit)
 from account.models import UserAccount,Account                      
-from .serializers import (Categories1Serializer,
-                            Products1Serializer,
-                            Product_item1serializer,
-                            Variation1serializer,
-                            Variation_option1serializer,
-                            Product_Configuration1Serializer,
+from .serializers import (CategoriesSerializer,
+                            ProductsSerializer,
+                            Product_itemserializer,
+                            Variationserializer,
+                            Variation_optionserializer,
+                            Product_ConfigurationSerializer,
                             categorywiseproducts,
-                            Products1foritemsSerializer,
+                            ProductsforitemsSerializer,
                             ShoppingCartSerializer,
                             ShoppingCartItemsSerializer,
                             OrderSerializer,
                             Order_itemsSerializer,
-                            AccountDepositSerializer)
+                            AccountDepositSerializer,
+                            Product_itemserializerwithoutmrp)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.db import transaction
-
+from rest_framework.permissions import IsAuthenticated
 
 
 
 # Create your views here.
 class CategoryprodsView(APIView):
     def get(self,request):
-        queryset=Categories1.objects.all()
+        queryset=Categories.objects.all()
         cpdata=categorywiseproducts(queryset,many=True).data
 
         return Response(cpdata)
@@ -43,73 +44,96 @@ class CategoryprodsView(APIView):
 
 class prodidView(APIView):
     def get(self,request,pk=None):
-        queryset=Products1.objects.get(id=pk)
-        proddata=Products1Serializer(queryset).data
+        queryset=Products.objects.get(id=pk)
+        proddata=ProductsSerializer(queryset).data
 
         return Response(proddata)
 
 class variantsView(APIView):
     def get(self,request):
-        queryset=Categories1.objects.all()
-        categories=Categories1Serializer(queryset,many=True,read_only=True).data
+        queryset=Categories.objects.all()
+        categories=CategoriesSerializer(queryset,many=True,read_only=True).data
 
         for category in categories:
             print(category)
-            variation=Variation1.objects.filter(category__id=category["id"])
-            variantsdata=Variation1serializer(variation,many=True).data
+            variation=Variation.objects.filter(category__id=category["id"])
+            variantsdata=Variationserializer(variation,many=True).data
             category["variants"]=variantsdata
 
             for variant in variantsdata:
                 variant_id = variant["id"]
-                options = Variation_option1.objects.filter(variation__id=variant_id)
-                variant["options"] = Variation_option1serializer(options, many=True).data
+                options = Variation_option.objects.filter(variation__id=variant_id)
+                variant["options"] = Variation_optionserializer(options, many=True).data
 
         return Response(categories)
 
 
-class porductswithvariants(APIView):
+class porductswithvariants(APIView):      #full view
+    permission_classes=[IsAuthenticated]
+
     def get(self,request):
-        queryset=Products1.objects.all()
-        products_data=Products1Serializer(queryset,many=True).data
+        queryset=Products.objects.all()
+        products_data=ProductsSerializer(queryset,many=True).data
 
         for product in products_data:
-            produtitem_query=Product_item1.objects.filter(product__id=product["id"])
-            product_items_data=Product_item1serializer(produtitem_query,many=True).data
+            produtitem_query=Product_item.objects.filter(product__id=product["id"])
+            product_items_data=Product_itemserializer(produtitem_query,many=True).data
             product["product_items"]=product_items_data
 
             for product_item in product_items_data:
-                productvariant_query=Product_Configuration1.objects.filter(product_item__id=product_item["id"])
-                productvariant_data=Product_Configuration1Serializer(productvariant_query,many=True).data
+                productvariant_query=Product_Configuration.objects.filter(product_item__id=product_item["id"])
+                productvariant_data=Product_ConfigurationSerializer(productvariant_query,many=True).data
                 product_item["productvariants"]=productvariant_data
 
         return Response(products_data)
+
+class porductswithvariantstouser(APIView):      #full view
+    
+    def get(self,request):
+        queryset=Products.objects.all()
+        products_data=ProductsSerializer(queryset,many=True).data
+
+        for product in products_data:
+            produtitem_query=Product_item.objects.filter(product__id=product["id"])
+            product_items_data=Product_itemserializerwithoutmrp(produtitem_query,many=True).data
+            product["product_items"]=product_items_data
+
+            for product_item in product_items_data:
+                productvariant_query=Product_Configuration.objects.filter(product_item__id=product_item["id"])
+                productvariant_data=Product_ConfigurationSerializer(productvariant_query,many=True).data
+                product_item["productvariants"]=productvariant_data
+
+        return Response(products_data)
+
 
 class ProductsPriceOrder(APIView):
     def get(self,request):
         order=request.query_params.get("order","asc")
 
-        # queryset=Products1.objects.all()
-        # products_data=Products1foritemsSerializer(queryset,many=True).data
+        # queryset=Products.objects.all()
+        # products_data=ProductsforitemsSerializer(queryset,many=True).data
 
         # return Response(products_data)
 
 # <------------------------another process---------------->
 
-        queryset=Products1.objects.all()
-        products_data=Products1Serializer(queryset,many=True).data
+        queryset=Products.objects.all()
+        products_data=ProductsSerializer(queryset,many=True).data
 
         for product in products_data:
             if order=="asc" or order=="ASC":
-                product["items_in_order"]=Product_item1serializer(Product_item1.objects.all().order_by("mrp"),many=True).data
+                product["items_in_order"]=Product_itemserializer(Product_item.objects.all().order_by("selling_price"),many=True).data
             elif order=="desc" or order=="DESC":
-                product["items_in_order"]=Product_item1serializer(Product_item1.objects.all().order_by("-mrp"),many=True).data
+                product["items_in_order"]=Product_itemserializer(Product_item.objects.all().order_by("-selling_price"),many=True).data
 
         return Response(products_data)
 
 
 class AddCategoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self,request):
-        addcategory=Categories1Serializer(data=request.data)
+        addcategory=CategoriesSerializer(data=request.data)
 
         if addcategory.is_valid():
             try:
@@ -121,8 +145,11 @@ class AddCategoryView(APIView):
             return Response({"invalid json provided"},status=status.HTTP_400_BAD_REQUEST)
 
 class AddProductView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self,request):
-        addproduct=Products1Serializer(data=request.data)
+        addproduct=ProductsSerializer(data=request.data)
+
 
         if addproduct.is_valid():
             try:
@@ -131,12 +158,15 @@ class AddProductView(APIView):
             except Exception as e:
                 return Response(str(e),status=status.HTTP_409_CONFLICT)
         else:
-            return Response({"invalid json provided"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"msg":"invalid json provided",
+                               "error":addproduct.errors},status=status.HTTP_400_BAD_REQUEST)
 
 
 class AddProductItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self,request):
-        addproductitem=Product_item1serializer(data=request.data)
+        addproductitem=Product_itemserializer(data=request.data)
 
         if addproductitem.is_valid():
             try:
@@ -172,9 +202,9 @@ class AddToCartView(APIView):
 
         # Try to get product
         try:
-            product = Product_item1.objects.get(id=product_id)
+            product = Product_item.objects.get(id=product_id)
             print("product found")
-        except Product_item1.DoesNotExist:
+        except Product_item.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
         if product.qty_in_stock < qty:
@@ -347,6 +377,8 @@ class OrderItemsView(APIView):
 
 
 class AddAccountDeposits(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self,request):
         depositsdata=AccountDepositSerializer(data=request.data)
 

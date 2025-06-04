@@ -11,37 +11,41 @@ from .models import (Categories,
                         Order_items,
                         AccountDeposit)
 
-class Products1Serializer(serializers.ModelSerializer):
+class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model=Products
         fields=["id","category","product_name","decription"]
 
 
-class Categories1Serializer(serializers.ModelSerializer):
-
+class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
         model=Categories
         fields=["id","category_name"]
 
 
-class Product_item1serializer(serializers.ModelSerializer):
+class Product_itemserializer(serializers.ModelSerializer):
     class Meta:
         model=Product_item
         fields='__all__'
 
-class Variation1serializer(serializers.ModelSerializer):
+class Product_itemserializerwithoutmrp(serializers.ModelSerializer):
+    class Meta:
+        model=Product_item
+        fields=["id","product","sku","qty_in_stock","product_img","selling_price","description"]
+
+class Variationserializer(serializers.ModelSerializer):
     class Meta:
         model=Variation
         fields='__all__'
 
-class Variation_option1serializer(serializers.ModelSerializer):
+class Variation_optionserializer(serializers.ModelSerializer):
     class Meta:
         model=Variation_option
         fields='__all__'
 
-class Product_Configuration1Serializer(serializers.ModelSerializer):
+class Product_ConfigurationSerializer(serializers.ModelSerializer):
     # product_item=Product_item1serializer()
-    variationoption=Variation_option1serializer()
+    variationoption=Variation_optionserializer()
 
     class Meta:
         model=Product_Configuration
@@ -74,24 +78,22 @@ class AccountDepositSerializer(serializers.ModelSerializer):
         fields='__all__'
 
 
-
-
 # <------------------## extra serializers ##----------------------------->
 
 
 
 class categorywiseproducts(serializers.ModelSerializer):             ####extraaaaaaaaaaaaaaaaaaa serializer
-    prods=Products1Serializer(many=True,read_only=True)
+    prods=ProductsSerializer(many=True,read_only=True)
 
     class Meta:
         model=Categories
         fields=["id","category_name","prods"]
 
-class Products1foritemsSerializer(serializers.ModelSerializer):
-    prod_items=Product_item1serializer(many=True,read_only=True)
+class ProductsforitemsSerializer(serializers.ModelSerializer):
+    prod_items=Product_itemserializer(many=True,read_only=True)
 
     class Meta:
-        model=Products
+        model=Products                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
         fields=["category","product_name","decription","prod_items"]
 
 
