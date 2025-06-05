@@ -79,9 +79,6 @@ class AccountDepositSerializer(serializers.ModelSerializer):
 
 
 # <------------------## extra serializers ##----------------------------->
-
-
-
 class categorywiseproducts(serializers.ModelSerializer):             ####extraaaaaaaaaaaaaaaaaaa serializer
     prods=ProductsSerializer(many=True,read_only=True)
 
