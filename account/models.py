@@ -17,8 +17,6 @@ class UserAccount(models.Model):
     def __str__(self):
         return self.user_name
 
-
-
 class Account(models.Model):
     phone_number=models.CharField(unique=True)
     name=models.CharField(max_length=255)

@@ -38,7 +38,7 @@ class CategoryprodsView(APIView):
     def get(self,request):
         queryset=Categories.objects.all()
         cpdata=categorywiseproducts(queryset,many=True).data
-
+        
         return Response(cpdata)
 
 

@@ -3,7 +3,7 @@ from account.models import UserAccount,Account
 
 # Create your models here.
 class Categories(models.Model):
-    category_name=models.CharField(max_length=255)  # clothings / acessaries / electronics /home &furnitures /Grocery & essentials
+    category_name=models.CharField(max_length=255,unique=True)  # clothings / acessaries / electronics /home &furnitures /Grocery & essentials
 
     def __str__(self):
         return self.category_name
@@ -72,7 +72,6 @@ class ShoppingCartItems(models.Model):
         self.sp=self.qty*self.product_item.selling_price
         self.mrp=self.qty*self.product_item.mrp
         super().save(*args, **Kwargs)
-
 
     def __str__(self):
         return self.product_item.sku

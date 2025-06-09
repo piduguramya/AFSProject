@@ -27,7 +27,6 @@ SECRET_KEY = 'django-insecure-mnfup$_*anb_74$1o2!!ax5(ntag@*em*y)cj9*x-+ii1^@1vt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -77,6 +76,8 @@ TEMPLATES = [
         },
     },
 ]
+
+ALLOWED_HOSTS = ['192.168.1.129', 'localhost', '127.0.0.1']
 
 WSGI_APPLICATION = 'AFSproject.wsgi.application'
 
